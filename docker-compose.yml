@@ -7,8 +7,6 @@ services:
     image: amekss/rq-prometheus-exporter
     ports:
       - 4567:8000
-    volumes:
-      - .:/app
     environment:
       - RQ_REDIS_URI=redis://redis:6379/0
     command:

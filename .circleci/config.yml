@@ -1,0 +1,49 @@
+version: 2
+jobs:
+  test:
+    docker:
+      - image: circleci/python:3.6.1
+      
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: run tests
+          command: |
+            cd ~/repo
+            docker-compose run --rm exporter pytest
+             
+
+  build:
+    docker:
+      - image: circleci/python:3.6.1
+    working_directory: ~/repo
+    steps:
+      - setup_remote_docker
+      - run:
+          name: Connect Docker Registry
+          command: docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
+      - run:
+          name: Build Image
+          command: cd ~/repo && docker build --pull --rm=false -t honestica/rq-prometheus-exporter:$CIRCLE_SHA1 .
+      - run:
+          name: Push Image
+          command: docker push honestica/rq-prometheus-exporter:$CIRCLE_SHA1
+
+workflows:
+  version: 2
+  master:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only: master
+      - build:
+          context: org-global
+          filters:
+            branches:
+              only: master
+          requires:
+              - test
